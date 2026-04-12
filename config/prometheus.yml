@@ -6,7 +6,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'todo-list-app'
-    metrics_path: '/actuator/prometheus'
+  - job_name: 'todo-list'
+    metrics_path: '/api/actuator/prometheus'
     static_configs:
-      - targets: ['todo-list-app:8080']
+      - targets: ['app:8080']

@@ -11,6 +11,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+    networks:
+      - todo-network
+
   db:
     image: postgres:17
     restart: always
@@ -27,6 +30,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - todo-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
@@ -36,9 +41,19 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_URL: http://keycloak:${KEYCLOAK_PORT}
+      KC_HTTP_PORT: ${KEYCLOAK_PORT}
+      KC_HEALTH_ENABLED: "true"
     ports:
-      - "${KEYCLOAK_PORT}:8080"
-    command: start-dev
+      - "${KEYCLOAK_PORT}:${KEYCLOAK_PORT}"
+    command: start-dev --http-port ${KEYCLOAK_PORT}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${KEYCLOAK_PORT}/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - todo-network
 
   prometheus:
     image: prom/prometheus:latest
@@ -54,7 +69,8 @@ services:
     ports:
       - "${GRAFANA_PORT}:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USERNAME}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
     networks:
       - todo-network
 
