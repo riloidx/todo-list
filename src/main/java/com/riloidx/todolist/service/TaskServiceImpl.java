@@ -9,6 +9,7 @@ import com.riloidx.todolist.model.Task;
 import com.riloidx.todolist.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.data.metrics.DefaultRepositoryTagsProvider;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +32,8 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskMapper.toEntity(createTaskDto);
         task.setUserId(userId);
 
-        Integer lastPosition = taskRepo.findMaxPositionByUserId(task.getUserId());
-        int newPosition = (lastPosition == null ? 0 : lastPosition + 1);
-        task.setPosition(newPosition);
-
-        log.debug("Task position set to: {}", newPosition);
+        task.setPosition(1);
+        taskRepo.incrementPositionsFrom(task.getPosition(), userId);
 
         Task savedTask = taskRepo.save(task);
         log.info("Task created successfully with id: {}", savedTask.getId());
@@ -61,7 +59,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskResponseDto> findAllActiveTasks(String userId) {
         log.debug("Fetching all active tasks for user: {}", userId);
-        return taskRepo.findAllByUserIdAndCompletedFalseOrderByPositionDesc(userId)
+        return taskRepo.findAllByUserIdAndCompletedFalseOrderByPositionAsc(userId)
                 .stream()
                 .map(taskMapper::toDto)
                 .toList();
@@ -73,6 +71,16 @@ public class TaskServiceImpl implements TaskService {
         log.info("Updating task {} for user {}", id, userId);
 
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
+
+        if (curTask.getCompleted() && updateTaskDto.completed()) {
+            log.warn("User {} tried to edit a completed task {}", userId, id);
+            throw new IllegalStateException("Cannot edit a completed task. Restore it first.");
+        }
+
+        if (curTask.getCompleted() != updateTaskDto.completed()) {
+            handleStatusChange(curTask, updateTaskDto.completed(), userId);
+        }
+
         taskMapper.updateEntityFromDto(updateTaskDto, curTask);
 
         Task savedTask = taskRepo.save(curTask);
@@ -86,10 +94,27 @@ public class TaskServiceImpl implements TaskService {
     public void delete(long id, String userId) {
         log.info("Deleting task {} for user {}", id, userId);
 
-        findEntityByIdAndCheckOwner(id, userId);
+        Task curTask = findEntityByIdAndCheckOwner(id, userId);
         taskRepo.deleteById(id);
+        taskRepo.flush();
+
+        taskRepo.decrementPositionsFrom(curTask.getPosition(), userId);
 
         log.info("Task {} deleted successfully", id);
+    }
+
+    private void handleStatusChange(Task task, boolean isNowCompleted, String userId) {
+        if (isNowCompleted) {
+            int oldPos = task.getPosition();
+            task.setCompleted(true);
+            task.setPosition(0);
+            taskRepo.decrementPositionsFrom(oldPos, userId);
+        } else {
+            task.setCompleted(false);
+            task.setPosition(1);
+            taskRepo.incrementPositionsFrom(1, userId);
+        }
+        taskRepo.flush();
     }
 
     private Task findEntityByIdAndCheckOwner(long id, String userId) {
