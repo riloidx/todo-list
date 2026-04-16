@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record UpdateTaskDto(
-        @NotBlank(message = "Title is mandatory")
         @Size(min = 2, max = 100, message = "Title must be between 2 and 100 characters")
         String title,
 
