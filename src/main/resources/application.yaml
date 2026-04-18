@@ -30,3 +30,6 @@ logging:
   level:
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
+
+frontend:
+  url: ${FRONTEND_URL:http://localhost:3000}
