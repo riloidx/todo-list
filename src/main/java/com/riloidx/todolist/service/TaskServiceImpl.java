@@ -1,15 +1,17 @@
 package com.riloidx.todolist.service;
 
 import com.riloidx.todolist.dto.request.CreateTaskDto;
-import com.riloidx.todolist.dto.request.UpdateTaskDto;
+import com.riloidx.todolist.dto.request.UpdateTaskContentDto;
+import com.riloidx.todolist.dto.request.UpdateTaskPositionDto;
+import com.riloidx.todolist.dto.request.UpdateTaskCompletedDto;
 import com.riloidx.todolist.dto.response.TaskResponseDto;
+import com.riloidx.todolist.exception.TaskAlreadyInStateException;
 import com.riloidx.todolist.exception.TaskNotFoundException;
 import com.riloidx.todolist.mapper.TaskMapper;
 import com.riloidx.todolist.model.Task;
 import com.riloidx.todolist.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.data.metrics.DefaultRepositoryTagsProvider;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,29 +69,10 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
-    public TaskResponseDto update(long id, UpdateTaskDto updateTaskDto, String userId) {
+    public TaskResponseDto update(long id, UpdateTaskContentDto updateTaskDto, String userId) {
         log.info("Updating task {} for user {}", id, userId);
 
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
-
-        Boolean completed = updateTaskDto.completed();
-        Integer newPos = updateTaskDto.position();
-
-        if (newPos != null && !newPos.equals(curTask.getPosition())) {
-            reorderTasks(curTask.getPosition(), newPos, userId);
-            curTask.setPosition(newPos);
-        }
-
-        if (completed != null) {
-            if (Boolean.TRUE.equals(curTask.getCompleted()) && completed) {
-                log.warn("User {} tried to edit a completed task {}", userId, id);
-                throw new IllegalStateException("Cannot edit a completed task. Restore it first.");
-            }
-
-            if (!completed.equals(curTask.getCompleted())) {
-                handleStatusChange(curTask, completed, userId);
-            }
-        }
 
         taskMapper.updateEntityFromDto(updateTaskDto, curTask);
 
@@ -97,6 +80,33 @@ public class TaskServiceImpl implements TaskService {
         log.info("Task {} updated successfully", id);
 
         return taskMapper.toDto(savedTask);
+    }
+
+    @Override
+    public TaskResponseDto updateCompleted(long id, UpdateTaskCompletedDto updateTaskCompletedDto, String userId) {
+        Task curTask = findEntityByIdAndCheckOwner(id, userId);
+
+        if (updateTaskCompletedDto.completed() == curTask.getCompleted()) {
+            throw new TaskAlreadyInStateException("Task already have completed=" + curTask.getCompleted());
+        }
+
+        handleStatusChange(curTask, updateTaskCompletedDto.completed(), userId);
+
+        return taskMapper.toDto(curTask);
+    }
+
+    @Override
+    public TaskResponseDto updatePosition(long id, UpdateTaskPositionDto updateTaskPositionDto, String userId) {
+        Task curTask = findEntityByIdAndCheckOwner(id, userId);
+
+        if (updateTaskPositionDto.position().equals(curTask.getPosition())) {
+            throw new TaskAlreadyInStateException("Task already have position=" + curTask.getPosition());
+        }
+
+        reorderTasks(curTask.getPosition(), updateTaskPositionDto.position(), userId);
+        curTask.setPosition(updateTaskPositionDto.position());
+
+        return taskMapper.toDto(taskRepo.save(curTask));
     }
 
     @Override
@@ -126,10 +136,12 @@ public class TaskServiceImpl implements TaskService {
             int oldPos = task.getPosition();
             task.setCompleted(true);
             task.setPosition(0);
+
             taskRepo.decrementPositionsFrom(oldPos, userId);
         } else {
             task.setCompleted(false);
             task.setPosition(1);
+
             taskRepo.incrementPositionsFrom(1, userId);
         }
         taskRepo.flush();

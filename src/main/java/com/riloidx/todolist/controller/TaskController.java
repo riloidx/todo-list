@@ -1,7 +1,9 @@
 package com.riloidx.todolist.controller;
 
 import com.riloidx.todolist.dto.request.CreateTaskDto;
-import com.riloidx.todolist.dto.request.UpdateTaskDto;
+import com.riloidx.todolist.dto.request.UpdateTaskContentDto;
+import com.riloidx.todolist.dto.request.UpdateTaskCompletedDto;
+import com.riloidx.todolist.dto.request.UpdateTaskPositionDto;
 import com.riloidx.todolist.dto.response.TaskResponseDto;
 import com.riloidx.todolist.service.TaskService;
 import com.riloidx.todolist.util.SecurityUtils;
@@ -50,9 +52,25 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskResponseDto> update(@PathVariable long id,
-                                                  @Valid @RequestBody UpdateTaskDto updateTaskDto) {
-        var task = taskService.update(id, updateTaskDto, securityUtils.getCurrentUserId());
+    public ResponseEntity<TaskResponseDto> updateContent(@PathVariable long id,
+                                                  @Valid @RequestBody UpdateTaskContentDto updateTaskContentDto) {
+        var task = taskService.update(id, updateTaskContentDto, securityUtils.getCurrentUserId());
+
+        return ResponseEntity.status(HttpStatus.OK).body(task);
+    }
+
+    @PatchMapping("/{id}/completed")
+    public ResponseEntity<TaskResponseDto> updateCompleted(@PathVariable long id,
+                                                  @Valid @RequestBody UpdateTaskCompletedDto updateTaskCompletedDto) {
+        var task = taskService.updateCompleted(id, updateTaskCompletedDto, securityUtils.getCurrentUserId());
+
+        return ResponseEntity.status(HttpStatus.OK).body(task);
+    }
+
+    @PatchMapping("/{id}/position")
+    public ResponseEntity<TaskResponseDto> updatePosition(@PathVariable long id,
+                                                  @Valid @RequestBody UpdateTaskPositionDto updateTaskPositionDto) {
+        var task = taskService.updatePosition(id, updateTaskPositionDto, securityUtils.getCurrentUserId());
 
         return ResponseEntity.status(HttpStatus.OK).body(task);
     }

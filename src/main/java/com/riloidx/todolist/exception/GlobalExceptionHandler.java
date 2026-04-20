@@ -4,6 +4,7 @@ package com.riloidx.todolist.exception;
 import com.riloidx.todolist.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -52,6 +53,15 @@ public class GlobalExceptionHandler {
         var body = buildErrorResponse(e, HttpStatus.UNAUTHORIZED, request);
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
+    @ExceptionHandler(TaskAlreadyInStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(TaskAlreadyInStateException e,
+                                                                        HttpServletRequest request) {
+        log.warn("Bad request state on {}: {}", request.getRequestURI(), e.getMessage());
+        var body = buildErrorResponse(e, HttpStatus.BAD_REQUEST, request);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
