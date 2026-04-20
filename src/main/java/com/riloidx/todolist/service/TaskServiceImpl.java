@@ -72,13 +72,17 @@ public class TaskServiceImpl implements TaskService {
 
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
 
-        if (curTask.getCompleted() && updateTaskDto.completed()) {
-            log.warn("User {} tried to edit a completed task {}", userId, id);
-            throw new IllegalStateException("Cannot edit a completed task. Restore it first.");
-        }
+        Boolean completed = updateTaskDto.completed();
 
-        if (curTask.getCompleted() != updateTaskDto.completed()) {
-            handleStatusChange(curTask, updateTaskDto.completed(), userId);
+        if (completed != null) {
+            if (Boolean.TRUE.equals(curTask.getCompleted()) && completed) {
+                log.warn("User {} tried to edit a completed task {}", userId, id);
+                throw new IllegalStateException("Cannot edit a completed task. Restore it first.");
+            }
+
+            if (!completed.equals(curTask.getCompleted())) {
+                handleStatusChange(curTask, completed, userId);
+            }
         }
 
         taskMapper.updateEntityFromDto(updateTaskDto, curTask);
