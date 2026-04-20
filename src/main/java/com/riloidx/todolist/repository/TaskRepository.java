@@ -33,4 +33,26 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "AND t.userId = :userId " +
             "AND t.completed = false")
     void decrementPositionsFrom(@Param("position") int position, @Param("userId") String userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Task t " +
+            "SET t.position = t.position + 1 " +
+            "WHERE t.position >= :startPosition " +
+            "AND t.position < :endPosition " +
+            "AND t.userId = :userId " +
+            "AND t.completed = false")
+    void incrementPositionsInRange(@Param("startPosition") int startPosition,
+                                   @Param("endPosition") int endPosition,
+                                   @Param("userId") String userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Task t " +
+            "SET t.position = t.position - 1 " +
+            "WHERE t.position > :startPosition " +
+            "AND t.position <= :endPosition " +
+            "AND t.userId = :userId " +
+            "AND t.completed = false")
+    void decrementPositionsInRange(@Param("startPosition") int startPosition,
+                                   @Param("endPosition") int endPosition,
+                                   @Param("userId") String userId);
 }
