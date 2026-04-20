@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260420-1700-add-unique-task-position
+      author: matvey
+      changes:
+        - sql:
+            dbms: postgresql
+            endDelimiter: ;
+            splitStatements: true
+            sql: >
+              CREATE UNIQUE INDEX idx_user_active_task_position 
+              ON tasks (user_id, position) 
+              WHERE (completed = false);

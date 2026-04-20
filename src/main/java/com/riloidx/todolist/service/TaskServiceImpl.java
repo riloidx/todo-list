@@ -73,11 +73,11 @@ public class TaskServiceImpl implements TaskService {
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
 
         Boolean completed = updateTaskDto.completed();
-        Integer newPosition = updateTaskDto.position();
+        Integer newPos = updateTaskDto.position();
 
-        if (updateTaskDto.position() != null) {
-            reorderTasks(curTask.getPosition(), newPosition, userId);
-            curTask.setPosition(newPosition);
+        if (newPos != null && !newPos.equals(curTask.getPosition())) {
+            reorderTasks(curTask.getPosition(), newPos, userId);
+            curTask.setPosition(newPos);
         }
 
         if (completed != null) {
@@ -114,12 +114,10 @@ public class TaskServiceImpl implements TaskService {
     }
 
     private void reorderTasks(int oldPos, int newPos, String userId) {
-        if (oldPos == newPos) return;
-
         if (oldPos < newPos) {
             taskRepo.decrementPositionsInRange(oldPos + 1, newPos, userId);
         } else {
-            taskRepo.incrementPositionsInRange(newPos, oldPos - 1, userId);
+            taskRepo.incrementPositionsInRange(newPos, oldPos, userId);
         }
     }
 

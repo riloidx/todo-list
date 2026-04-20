@@ -48,7 +48,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Task t " +
             "SET t.position = t.position - 1 " +
-            "WHERE t.position > :startPosition " +
+            "WHERE t.position >= :startPosition " +
             "AND t.position <= :endPosition " +
             "AND t.userId = :userId " +
             "AND t.completed = false")
