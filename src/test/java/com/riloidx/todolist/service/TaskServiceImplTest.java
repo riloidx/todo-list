@@ -65,13 +65,13 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void updateContentShouldOnlyUpdateText() {
+    void updateContentShouldOnlyUpdateContentText() {
         UpdateTaskContentDto updateDto = new UpdateTaskContentDto("New Title", "New Desc");
         when(taskRepo.findById(taskId)).thenReturn(Optional.of(task));
         when(taskRepo.save(task)).thenReturn(task);
         when(taskMapper.toDto(task)).thenReturn(mock(TaskResponseDto.class));
 
-        taskService.update(taskId, updateDto, userId);
+        taskService.updateContent(taskId, updateDto, userId);
 
         verify(taskMapper).updateEntityFromDto(updateDto, task);
         verify(taskRepo).save(task);
@@ -81,7 +81,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void updateCompletedShouldHandleChangeToTrue() {
+    void updateContentCompletedShouldHandleChangeToTrue() {
         UpdateTaskCompletedDto dto = new UpdateTaskCompletedDto(true);
         when(taskRepo.findById(taskId)).thenReturn(Optional.of(task));
         when(taskMapper.toDto(task)).thenReturn(mock(TaskResponseDto.class));
@@ -95,7 +95,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void updateCompletedShouldThrowIfStateIsSame() {
+    void updateContentCompletedShouldThrowIfStateIsSame() {
         UpdateTaskCompletedDto dto = new UpdateTaskCompletedDto(false);
         when(taskRepo.findById(taskId)).thenReturn(Optional.of(task));
 
@@ -104,7 +104,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void updatePositionShouldHandleMoveDown() {
+    void updateContentPositionShouldHandleMoveDown() {
         int newPos = 8;
         UpdateTaskPositionDto dto = new UpdateTaskPositionDto(newPos);
         when(taskRepo.findById(taskId)).thenReturn(Optional.of(task));
@@ -119,7 +119,7 @@ class TaskServiceImplTest {
     }
 
     @Test
-    void updatePositionShouldHandleMoveUp() {
+    void updateContentPositionShouldHandleMoveUp() {
         int newPos = 2;
         UpdateTaskPositionDto dto = new UpdateTaskPositionDto(newPos);
         when(taskRepo.findById(taskId)).thenReturn(Optional.of(task));

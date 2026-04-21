@@ -69,7 +69,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
-    public TaskResponseDto update(long id, UpdateTaskContentDto updateTaskDto, String userId) {
+    public TaskResponseDto updateContent(long id, UpdateTaskContentDto updateTaskDto, String userId) {
         log.info("Updating task {} for user {}", id, userId);
 
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
@@ -83,6 +83,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public TaskResponseDto updateCompleted(long id, UpdateTaskCompletedDto updateTaskCompletedDto, String userId) {
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
 
@@ -96,6 +97,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public TaskResponseDto updatePosition(long id, UpdateTaskPositionDto updateTaskPositionDto, String userId) {
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
 
@@ -136,13 +138,12 @@ public class TaskServiceImpl implements TaskService {
             int oldPos = task.getPosition();
             task.setCompleted(true);
             task.setPosition(0);
-
             taskRepo.decrementPositionsFrom(oldPos, userId);
         } else {
             task.setCompleted(false);
-            task.setPosition(1);
-
             taskRepo.incrementPositionsFrom(1, userId);
+            task.setPosition(1);
+            taskRepo.save(task);
         }
         taskRepo.flush();
     }

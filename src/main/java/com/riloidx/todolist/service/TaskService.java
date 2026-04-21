@@ -5,7 +5,6 @@ import com.riloidx.todolist.dto.request.UpdateTaskContentDto;
 import com.riloidx.todolist.dto.request.UpdateTaskPositionDto;
 import com.riloidx.todolist.dto.request.UpdateTaskCompletedDto;
 import com.riloidx.todolist.dto.response.TaskResponseDto;
-import org.apache.coyote.BadRequestException;
 
 import java.util.List;
 
@@ -18,7 +17,7 @@ public interface TaskService {
 
     List<TaskResponseDto> findAllActiveTasks(String userId);
 
-    TaskResponseDto update(long id, UpdateTaskContentDto updateTaskDto, String userId);
+    TaskResponseDto updateContent(long id, UpdateTaskContentDto updateTaskDto, String userId);
 
     TaskResponseDto updateCompleted(long id, UpdateTaskCompletedDto updateTaskCompletedDto, String userId);
 

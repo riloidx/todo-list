@@ -1,8 +1,8 @@
 package com.riloidx.todolist.controller;
 
 import com.riloidx.todolist.dto.request.CreateTaskDto;
-import com.riloidx.todolist.dto.request.UpdateTaskContentDto;
 import com.riloidx.todolist.dto.request.UpdateTaskCompletedDto;
+import com.riloidx.todolist.dto.request.UpdateTaskContentDto;
 import com.riloidx.todolist.dto.request.UpdateTaskPositionDto;
 import com.riloidx.todolist.dto.response.TaskResponseDto;
 import com.riloidx.todolist.service.TaskService;
@@ -51,17 +51,17 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<TaskResponseDto> updateContent(@PathVariable long id,
-                                                  @Valid @RequestBody UpdateTaskContentDto updateTaskContentDto) {
-        var task = taskService.update(id, updateTaskContentDto, securityUtils.getCurrentUserId());
+                                                         @Valid @RequestBody UpdateTaskContentDto updateTaskContentDto) {
+        var task = taskService.updateContent(id, updateTaskContentDto, securityUtils.getCurrentUserId());
 
         return ResponseEntity.status(HttpStatus.OK).body(task);
     }
 
     @PatchMapping("/{id}/completed")
     public ResponseEntity<TaskResponseDto> updateCompleted(@PathVariable long id,
-                                                  @Valid @RequestBody UpdateTaskCompletedDto updateTaskCompletedDto) {
+                                                           @Valid @RequestBody UpdateTaskCompletedDto updateTaskCompletedDto) {
         var task = taskService.updateCompleted(id, updateTaskCompletedDto, securityUtils.getCurrentUserId());
 
         return ResponseEntity.status(HttpStatus.OK).body(task);
@@ -69,7 +69,7 @@ public class TaskController {
 
     @PatchMapping("/{id}/position")
     public ResponseEntity<TaskResponseDto> updatePosition(@PathVariable long id,
-                                                  @Valid @RequestBody UpdateTaskPositionDto updateTaskPositionDto) {
+                                                          @Valid @RequestBody UpdateTaskPositionDto updateTaskPositionDto) {
         var task = taskService.updatePosition(id, updateTaskPositionDto, securityUtils.getCurrentUserId());
 
         return ResponseEntity.status(HttpStatus.OK).body(task);
