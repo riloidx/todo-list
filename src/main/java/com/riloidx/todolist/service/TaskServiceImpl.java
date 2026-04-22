@@ -117,10 +117,8 @@ public class TaskServiceImpl implements TaskService {
         log.info("Deleting task {} for user {}", id, userId);
 
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
-        taskRepo.deleteById(id);
-        taskRepo.flush();
-
         taskRepo.decrementPositionsFrom(curTask.getPosition(), userId);
+        taskRepo.deleteById(id);
 
         log.info("Task {} deleted successfully", id);
     }
@@ -136,16 +134,14 @@ public class TaskServiceImpl implements TaskService {
     private void handleStatusChange(Task task, boolean isNowCompleted, String userId) {
         if (isNowCompleted) {
             int oldPos = task.getPosition();
+            taskRepo.decrementPositionsFrom(oldPos, userId);
             task.setCompleted(true);
             task.setPosition(0);
-            taskRepo.decrementPositionsFrom(oldPos, userId);
         } else {
-            task.setCompleted(false);
             taskRepo.incrementPositionsFrom(1, userId);
+            task.setCompleted(false);
             task.setPosition(1);
-            taskRepo.save(task);
         }
-        taskRepo.flush();
     }
 
     private Task findEntityByIdAndCheckOwner(long id, String userId) {
