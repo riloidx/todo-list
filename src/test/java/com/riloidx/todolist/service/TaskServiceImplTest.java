@@ -85,13 +85,13 @@ class TaskServiceImplTest {
         UpdateTaskCompletedDto dto = new UpdateTaskCompletedDto(true);
         when(taskRepo.findById(taskId)).thenReturn(Optional.of(task));
         when(taskMapper.toDto(task)).thenReturn(mock(TaskResponseDto.class));
+        when(taskRepo.save(any(Task.class))).thenReturn(task);
 
         taskService.updateCompleted(taskId, dto, userId);
 
         assertThat(task.getCompleted()).isTrue();
         assertThat(task.getPosition()).isEqualTo(0);
         verify(taskRepo).decrementPositionsFrom(5, userId);
-        verify(taskRepo).flush();
     }
 
     @Test

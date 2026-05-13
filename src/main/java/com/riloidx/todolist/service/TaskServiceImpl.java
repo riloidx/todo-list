@@ -45,13 +45,11 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponseDto findById(long id, String userId) {
-        log.debug("Finding task {} for user {}", id, userId);
         return taskMapper.toDto(findEntityByIdAndCheckOwner(id, userId));
     }
 
     @Override
     public List<TaskResponseDto> findAllByUserIdAndCompleted(String userId, boolean completed) {
-        log.debug("Fetching tasks for user {} with completed status: {}", userId, completed);
         return taskRepo.findAllByUserIdAndCompletedOrderByUpdatedAtDesc(userId, completed)
                 .stream()
                 .map(taskMapper::toDto)
@@ -60,7 +58,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public List<TaskResponseDto> findAllActiveTasks(String userId) {
-        log.debug("Fetching all active tasks for user: {}", userId);
         return taskRepo.findAllByUserIdAndCompletedFalseOrderByPositionAsc(userId)
                 .stream()
                 .map(taskMapper::toDto)
@@ -70,14 +67,13 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public TaskResponseDto updateContent(long id, UpdateTaskContentDto updateTaskDto, String userId) {
-        log.info("Updating task {} for user {}", id, userId);
+        log.info("Updating content for task {} (user: {})", id, userId);
 
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
-
         taskMapper.updateEntityFromDto(updateTaskDto, curTask);
 
         Task savedTask = taskRepo.save(curTask);
-        log.info("Task {} updated successfully", id);
+        log.info("Content for task {} updated successfully", id);
 
         return taskMapper.toDto(savedTask);
     }
@@ -88,12 +84,16 @@ public class TaskServiceImpl implements TaskService {
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
 
         if (updateTaskCompletedDto.completed() == curTask.getCompleted()) {
+            log.warn("Task {} is already in target completed state: {}", id, curTask.getCompleted());
             throw new TaskAlreadyInStateException("Task already have completed=" + curTask.getCompleted());
         }
 
         handleStatusChange(curTask, updateTaskCompletedDto.completed(), userId);
+        log.info("Completion status for task {} updated", id);
 
-        return taskMapper.toDto(curTask);
+        Task updatedTask = taskRepo.save(curTask);
+
+        return taskMapper.toDto(updatedTask);
     }
 
     @Override
@@ -102,13 +102,17 @@ public class TaskServiceImpl implements TaskService {
         Task curTask = findEntityByIdAndCheckOwner(id, userId);
 
         if (updateTaskPositionDto.position().equals(curTask.getPosition())) {
+            log.warn("Task {} already has position {}", id, curTask.getPosition());
             throw new TaskAlreadyInStateException("Task already have position=" + curTask.getPosition());
         }
 
         reorderTasks(curTask.getPosition(), updateTaskPositionDto.position(), userId);
         curTask.setPosition(updateTaskPositionDto.position());
 
-        return taskMapper.toDto(taskRepo.save(curTask));
+        Task savedTask = taskRepo.save(curTask);
+        log.info("Task {} position updated to {}", id, savedTask.getPosition());
+
+        return taskMapper.toDto(savedTask);
     }
 
     @Override
